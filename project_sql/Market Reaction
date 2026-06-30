@@ -1,0 +1,33 @@
+-- Market reaction
+-- 1. How much does the stock price fall after disclosure?
+-- 2. Recovery percentage 30 days after attack 
+-- 3. How many days takes for full recovery in among sectors
+
+
+SELECT
+    mr.sector_index,
+    COUNT(*) AS incidents,
+
+    ROUND(
+        AVG(
+            ((price_disclosure_day - price_7d_before)
+            / price_7d_before) * 100
+        ),
+        2
+    ) AS avg_disclosure_change_pct,
+
+    ROUND(
+        AVG(
+            ((price_30d_after - price_disclosure_day)
+            / price_disclosure_day) * 100
+        ),
+        2
+    ) AS avg_recovery_pct,
+
+     ROUND(AVG(days_to_price_recovery),2) AS avg_days_to_recovery
+
+FROM market_reaction mr
+
+GROUP BY mr.sector_index
+
+ORDER BY avg_disclosure_change_pct;
