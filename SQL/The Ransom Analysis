@@ -1,0 +1,60 @@
+/*
+ 
+ ====================================================
+ Section 3 — Ransom Analysis
+ ====================================================
+ 
+ Objective
+ Evaluate whether ransom payments influence financial outcomes and determine which industries are most affected by ransomware attacks.
+ 
+ Business Questions
+ 
+ 1. How often do companies pay the ransom?
+ 2. Does paying ransom reduce total financial losses?
+ 3. Do incidents involving ransom payments exceed the average loss within their industry?
+ 4. Which industries pay the largest ransoms?
+ 5. Which sectors have above-average ransom payments?
+ 
+ 
+ */
+-- 1,2,3
+SELECT COUNT(ransom_demanded_usd) AS ransom_demands,
+    COUNT(ransom_paid_usd) AS ransom_payments,
+    ROUND(
+        COUNT(ransom_paid_usd)::numeric / COUNT(ransom_demanded_usd) * 100,
+        2
+    ) AS payment_rate_pct
+FROM financial_impact
+WHERE ransom_demanded_usd IS NOT NULL;
+SELECT CASE
+        WHEN ransom_paid_usd IS NOT NULL THEN 'Paid'
+        ELSE 'Not Paid'
+    END AS ransom_status,
+    COUNT(*) AS incidents,
+    ROUND(AVG(total_loss_usd), 2) AS avg_total_loss
+FROM financial_impact
+WHERE total_loss_usd IS NOT NULL
+GROUP BY ransom_status;
+-- 4
+SELECT mr.sector_index,
+    CASE
+        WHEN fi.ransom_paid_usd IS NOT NULL THEN 'Paid'
+        ELSE 'Not Paid'
+    END AS ransom_status,
+    COUNT(*) AS incidents,
+    ROUND(AVG(fi.total_loss_usd), 2) AS avg_total_loss
+FROM financial_impact fi
+    JOIN market_reaction mr ON fi.incident_id = mr.incident_id
+GROUP BY mr.sector_index,
+    ransom_status
+ORDER BY mr.sector_index;
+-- 5
+SELECT mr.sector_index,
+    ROUND(AVG(fi.ransom_paid_usd), 2) AS avg_ransom_paid,
+    ROUND(SUM(fi.ransom_paid_usd), 2) AS total_ransom_paid,
+    COUNT(*) AS ramson_count
+FROM financial_impact fi
+    JOIN market_reaction mr ON fi.incident_id = mr.incident_id
+WHERE ransom_paid_usd IS NOT NULL
+GROUP BY mr.sector_index
+ORDER BY total_ransom_paid DESC;

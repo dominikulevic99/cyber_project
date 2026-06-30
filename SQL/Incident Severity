@@ -1,0 +1,56 @@
+/*
+ ====================================================
+ Section Section 5 — Incident Sevirity
+ ====================================================
+ Objective
+ Identify characteristics of the most damaging cyber incidents and evaluate whether response behaviour influences financial impact.
+ 
+ Business Questions
+ 
+ 1. Find incidents whose total losses exceed the average loss of all incidents.
+ 2. Find the Top 10 most financially damaging incidents.
+ 3. Categorise incidents by severity:
+ Critical (>100M)
+ High (20M–100M)
+ Medium (5M–20M)
+ Low (<5M)
+ 
+ 
+ */
+--1 
+SELECT im.company_name,
+    mr.sector_index,
+    fi.total_loss_usd
+FROM financial_impact fi
+    JOIN incident_metadata im ON fi.incident_id = im.incident_id
+    JOIN market_reaction mr ON fi.incident_id = mr.incident_id
+WHERE fi.total_loss_usd > (
+        SELECT AVG(total_loss_usd)
+        FROM financial_impact
+        WHERE total_loss_usd IS NOT NULL
+    )
+ORDER BY fi.total_loss_usd DESC;
+--2
+SELECT im.company_name,
+    mr.sector_index,
+    fi.total_loss_usd
+FROM financial_impact fi
+    JOIN incident_metadata im ON fi.incident_id = im.incident_id
+    JOIN market_reaction mr ON fi.incident_id = mr.incident_id
+WHERE fi.total_loss_usd IS NOT NULL
+ORDER BY fi.total_loss_usd DESC
+LIMIT 10;
+--3
+SELECT CASE
+        WHEN total_loss_usd > 100000000 THEN 'Critical'
+        WHEN total_loss_usd > 20000000 THEN 'High'
+        WHEN total_loss_usd > 5000000 THEN 'Medium'
+        ELSE 'Low'
+    END AS severity,
+    COUNT(*) AS incidents,
+    ROUND(AVG(total_loss_usd), 2) AS avg_loss,
+    ROUND(MAX(total_loss_usd), 2) AS max_loss
+FROM financial_impact
+WHERE total_loss_usd IS NOT NULL
+GROUP BY severity
+ORDER BY avg_loss DESC;
