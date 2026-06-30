@@ -249,4 +249,4 @@ Dominykas Ulevič
 
 Business Management Student | Aspiring Data Analyst
 
-LinkedIn: *(add your profile)*
+LinkedIn: *Dominykas Ulevič*
